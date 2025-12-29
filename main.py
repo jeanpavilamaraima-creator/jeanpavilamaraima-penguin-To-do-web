@@ -87,7 +87,11 @@ async def agregar(descripcion: str = Form(...), fecha_limite: str = Form(...), d
     db.commit()
     return RedirectResponse("/", status_code=303)
 
+<<<<<<< HEAD
 # (Mantener aquí tus rutas de login, registro y finalizar como las tenías)
+=======
+
+>>>>>>> 3a89281a2997205e4789a4f4c8f33ca0755af5f0
 
 @app.post("/registro")
 async def registrar(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
