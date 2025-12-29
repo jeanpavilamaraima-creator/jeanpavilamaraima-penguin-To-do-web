@@ -7,9 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .table-sm td, .table-sm th { font-size: 0.85rem; }
-        .card { transition: transform 0.2s; }
+        .card { transition: transform 0.2s; border-radius: 12px; }
         .card:hover { transform: scale(1.01); }
-        .dia-col { min-width: 250px; }
+        .dia-col { min-width: 280px; }
+        .badge-notif { font-size: 0.7rem; vertical-align: middle; }
     </style>
 </head>
 <body class="bg-light">
@@ -19,11 +20,9 @@
     <div class="d-flex justify-content-between align-items-center mb-4 px-3 bg-white p-3 rounded shadow-sm">
         <div>
             <p class="mb-0 fs-5">Hola, <strong>{{ user.username }}</strong></p>
-            {% if user.email %}
-                <small class="text-success">● Notificaciones activas: {{ user.email }}</small>
-            {% else %}
-                <small class="text-muted">○ Notificaciones desactivadas</small>
-            {% endif %}
+            <div id="status-notificacion">
+                <span class="badge bg-secondary badge-notif">Cargando notificaciones...</span>
+            </div>
         </div>
 
         <div class="d-flex align-items-center gap-3">
@@ -32,40 +31,20 @@
                 <label class="form-check-label" for="themeSwitch" id="themeLabel">Modo Claro</label>
             </div>
             
-            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#configEmail">
-                📧 Google Notificaciones
-            </button>
-            
-            <a href="/logout" class="btn btn-sm btn-danger">Cerrar Sesión</a>
+            <a href="/logout" class="btn btn-sm btn-danger shadow-sm">Cerrar Sesión</a>
         </div>
     </div>
 
-    <div class="collapse mb-4" id="configEmail">
-        <div class="card card-body shadow-sm border-primary">
-            <h6 class="fw-bold">Configuración de Alertas</h6>
-            {% if user.email %}
-                <div class="d-flex justify-content-between align-items-center">
-                    <p class="mb-0">Tu cuenta <strong>{{ user.email }}</strong> recibirá correos cuando tus tareas venzan.</p>
-                    <a href="/unlink-google" class="btn btn-sm btn-outline-danger">Desvincular Cuenta</a>
-                </div>
-            {% else %}
-                <p class="small text-muted">Inicia sesión con Google para recibir correos automáticos cuando se cumpla la hora de tus tareas.</p>
-                <a href="/link-google" class="btn btn-outline-dark btn-sm d-inline-flex align-items-center">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G" style="width:15px; margin-right:8px;">
-                    Vincular con Google
-                </a>
-            {% endif %}
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 border-0">
         <div class="card-body">
-            <h5 class="card-title mb-3">Agregar Nueva Tarea</h5>
+            <h5 class="card-title mb-3 fw-bold">➕ Nueva Tarea</h5>
             <form action="/agregar" method="post" class="row g-3">
                 <div class="col-md-5">
-                    <input type="text" name="descripcion" class="form-control" placeholder="¿Qué hay que hacer?" required>
+                    <label class="form-label small fw-bold">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control" placeholder="Ej: Ir al gimnasio" required>
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label small fw-bold">Día de la semana</label>
                     <select name="dia" class="form-select">
                         <option value="Lunes">Lunes</option>
                         <option value="Martes">Martes</option>
@@ -77,48 +56,521 @@
                     </select>
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label small fw-bold">Fecha y Hora límite</label>
                     <input type="datetime-local" name="fecha_limite" class="form-control" required>
                 </div>
-                <div class="col-md-1">
-                    <button type="submit" class="btn btn-success w-100"> + </button>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100 fw-bold"> AGREGAR </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div class="row flex-nowrap overflow-auto pb-4">
+    <div class="row flex-nowrap overflow-auto pb-4 px-2">
         {% for dia, lista_tareas in tareas_por_dia.items() %}
-        <div class="col-md-3 dia-col">
-            <div class="card shadow-sm h-100">
-                <div class="card-header bg-dark text-white text-center fw-bold">
+        <div class="col-md-3 dia-col me-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-header bg-primary text-white text-center fw-bold border-0" style="border-radius: 12px 12px 0 0;">
                     {{ dia }}
                 </div>
-                <div class="card-body p-2">
+                <div class="card-body p-2 bg-white">
                     <table class="table table-sm table-hover mb-0">
                         <thead>
-                            <tr>
-                                <th>Tarea</th>
-                                <th>Hora</th>
-                                <th></th>
+                            <tr class="text-muted" style="font-size: 0.75rem;">
+                                <th>TAREA</th>
+                                <th>HORA</th>
+                                <th class="text-end">VER</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for tarea in lista_tareas %}
                             <tr>
-                                <td class="text-truncate" style="max-width: 120px;">
+                                <td class="text-truncate" style="max-width: 140px; font-weight: 500;">
                                     {{ tarea.descripcion }}
                                 </td>
-                                <td class="text-danger fw-bold" style="font-size: 0.75rem;">
+                                <td class="text-danger fw-bold" style="font-size: 0.8rem;">
                                     {{ tarea.fecha_limite.strftime('%H:%M') }}
                                 </td>
                                 <td class="text-end">
-                                    <a href="/tarea/{{ tarea.id }}" class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size: 0.7rem;">Ver</a>
+                                    <a href="/tarea/{{ tarea.id }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">+</a>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-3">
-                                    <small>Libre</small>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <small>Nada pendiente</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="/static/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Agenda Semanal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-sm td, .table-sm th { font-size: 0.85rem; }
+        .card { transition: transform 0.2s; border-radius: 12px; }
+        .card:hover { transform: scale(1.01); }
+        .dia-col { min-width: 280px; }
+        .badge-notif { font-size: 0.7rem; vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container-fluid mt-4">
+    {% if user %}
+    <div class="d-flex justify-content-between align-items-center mb-4 px-3 bg-white p-3 rounded shadow-sm">
+        <div>
+            <p class="mb-0 fs-5">Hola, <strong>{{ user.username }}</strong></p>
+            <div id="status-notificacion">
+                <span class="badge bg-secondary badge-notif">Cargando notificaciones...</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                <label class="form-check-label" for="themeSwitch" id="themeLabel">Modo Claro</label>
+            </div>
+            
+            <a href="/logout" class="btn btn-sm btn-danger shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+            <h5 class="card-title mb-3 fw-bold">➕ Nueva Tarea</h5>
+            <form action="/agregar" method="post" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control" placeholder="Ej: Ir al gimnasio" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Día de la semana</label>
+                    <select name="dia" class="form-select">
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Fecha y Hora límite</label>
+                    <input type="datetime-local" name="fecha_limite" class="form-control" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100 fw-bold"> AGREGAR </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row flex-nowrap overflow-auto pb-4 px-2">
+        {% for dia, lista_tareas in tareas_por_dia.items() %}
+        <div class="col-md-3 dia-col me-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-header bg-primary text-white text-center fw-bold border-0" style="border-radius: 12px 12px 0 0;">
+                    {{ dia }}
+                </div>
+                <div class="card-body p-2 bg-white">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr class="text-muted" style="font-size: 0.75rem;">
+                                <th>TAREA</th>
+                                <th>HORA</th>
+                                <th class="text-end">VER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tarea in lista_tareas %}
+                            <tr>
+                                <td class="text-truncate" style="max-width: 140px; font-weight: 500;">
+                                    {{ tarea.descripcion }}
+                                </td>
+                                <td class="text-danger fw-bold" style="font-size: 0.8rem;">
+                                    {{ tarea.fecha_limite.strftime('%H:%M') }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/tarea/{{ tarea.id }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">+</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <small>Nada pendiente</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="/static/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Agenda Semanal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-sm td, .table-sm th { font-size: 0.85rem; }
+        .card { transition: transform 0.2s; border-radius: 12px; }
+        .card:hover { transform: scale(1.01); }
+        .dia-col { min-width: 280px; }
+        .badge-notif { font-size: 0.7rem; vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container-fluid mt-4">
+    {% if user %}
+    <div class="d-flex justify-content-between align-items-center mb-4 px-3 bg-white p-3 rounded shadow-sm">
+        <div>
+            <p class="mb-0 fs-5">Hola, <strong>{{ user.username }}</strong></p>
+            <div id="status-notificacion">
+                <span class="badge bg-secondary badge-notif">Cargando notificaciones...</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                <label class="form-check-label" for="themeSwitch" id="themeLabel">Modo Claro</label>
+            </div>
+            
+            <a href="/logout" class="btn btn-sm btn-danger shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+            <h5 class="card-title mb-3 fw-bold">➕ Nueva Tarea</h5>
+            <form action="/agregar" method="post" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control" placeholder="Ej: Ir al gimnasio" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Día de la semana</label>
+                    <select name="dia" class="form-select">
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Fecha y Hora límite</label>
+                    <input type="datetime-local" name="fecha_limite" class="form-control" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100 fw-bold"> AGREGAR </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row flex-nowrap overflow-auto pb-4 px-2">
+        {% for dia, lista_tareas in tareas_por_dia.items() %}
+        <div class="col-md-3 dia-col me-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-header bg-primary text-white text-center fw-bold border-0" style="border-radius: 12px 12px 0 0;">
+                    {{ dia }}
+                </div>
+                <div class="card-body p-2 bg-white">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr class="text-muted" style="font-size: 0.75rem;">
+                                <th>TAREA</th>
+                                <th>HORA</th>
+                                <th class="text-end">VER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tarea in lista_tareas %}
+                            <tr>
+                                <td class="text-truncate" style="max-width: 140px; font-weight: 500;">
+                                    {{ tarea.descripcion }}
+                                </td>
+                                <td class="text-danger fw-bold" style="font-size: 0.8rem;">
+                                    {{ tarea.fecha_limite.strftime('%H:%M') }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/tarea/{{ tarea.id }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">+</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <small>Nada pendiente</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="/static/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Agenda Semanal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-sm td, .table-sm th { font-size: 0.85rem; }
+        .card { transition: transform 0.2s; border-radius: 12px; }
+        .card:hover { transform: scale(1.01); }
+        .dia-col { min-width: 280px; }
+        .badge-notif { font-size: 0.7rem; vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container-fluid mt-4">
+    {% if user %}
+    <div class="d-flex justify-content-between align-items-center mb-4 px-3 bg-white p-3 rounded shadow-sm">
+        <div>
+            <p class="mb-0 fs-5">Hola, <strong>{{ user.username }}</strong></p>
+            <div id="status-notificacion">
+                <span class="badge bg-secondary badge-notif">Cargando notificaciones...</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                <label class="form-check-label" for="themeSwitch" id="themeLabel">Modo Claro</label>
+            </div>
+            
+            <a href="/logout" class="btn btn-sm btn-danger shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+            <h5 class="card-title mb-3 fw-bold">➕ Nueva Tarea</h5>
+            <form action="/agregar" method="post" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control" placeholder="Ej: Ir al gimnasio" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Día de la semana</label>
+                    <select name="dia" class="form-select">
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Fecha y Hora límite</label>
+                    <input type="datetime-local" name="fecha_limite" class="form-control" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100 fw-bold"> AGREGAR </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row flex-nowrap overflow-auto pb-4 px-2">
+        {% for dia, lista_tareas in tareas_por_dia.items() %}
+        <div class="col-md-3 dia-col me-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-header bg-primary text-white text-center fw-bold border-0" style="border-radius: 12px 12px 0 0;">
+                    {{ dia }}
+                </div>
+                <div class="card-body p-2 bg-white">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr class="text-muted" style="font-size: 0.75rem;">
+                                <th>TAREA</th>
+                                <th>HORA</th>
+                                <th class="text-end">VER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tarea in lista_tareas %}
+                            <tr>
+                                <td class="text-truncate" style="max-width: 140px; font-weight: 500;">
+                                    {{ tarea.descripcion }}
+                                </td>
+                                <td class="text-danger fw-bold" style="font-size: 0.8rem;">
+                                    {{ tarea.fecha_limite.strftime('%H:%M') }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/tarea/{{ tarea.id }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">+</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <small>Nada pendiente</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="/static/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Agenda Semanal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .table-sm td, .table-sm th { font-size: 0.85rem; }
+        .card { transition: transform 0.2s; border-radius: 12px; }
+        .card:hover { transform: scale(1.01); }
+        .dia-col { min-width: 280px; }
+        .badge-notif { font-size: 0.7rem; vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container-fluid mt-4">
+    {% if user %}
+    <div class="d-flex justify-content-between align-items-center mb-4 px-3 bg-white p-3 rounded shadow-sm">
+        <div>
+            <p class="mb-0 fs-5">Hola, <strong>{{ user.username }}</strong></p>
+            <div id="status-notificacion">
+                <span class="badge bg-secondary badge-notif">Cargando notificaciones...</span>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="themeSwitch">
+                <label class="form-check-label" for="themeSwitch" id="themeLabel">Modo Claro</label>
+            </div>
+            
+            <a href="/logout" class="btn btn-sm btn-danger shadow-sm">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4 border-0">
+        <div class="card-body">
+            <h5 class="card-title mb-3 fw-bold">➕ Nueva Tarea</h5>
+            <form action="/agregar" method="post" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold">Descripción</label>
+                    <input type="text" name="descripcion" class="form-control" placeholder="Ej: Ir al gimnasio" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Día de la semana</label>
+                    <select name="dia" class="form-select">
+                        <option value="Lunes">Lunes</option>
+                        <option value="Martes">Martes</option>
+                        <option value="Miércoles">Miércoles</option>
+                        <option value="Jueves">Jueves</option>
+                        <option value="Viernes">Viernes</option>
+                        <option value="Sábado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Fecha y Hora límite</label>
+                    <input type="datetime-local" name="fecha_limite" class="form-control" required>
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100 fw-bold"> AGREGAR </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row flex-nowrap overflow-auto pb-4 px-2">
+        {% for dia, lista_tareas in tareas_por_dia.items() %}
+        <div class="col-md-3 dia-col me-3">
+            <div class="card shadow-sm h-100 border-0">
+                <div class="card-header bg-primary text-white text-center fw-bold border-0" style="border-radius: 12px 12px 0 0;">
+                    {{ dia }}
+                </div>
+                <div class="card-body p-2 bg-white">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr class="text-muted" style="font-size: 0.75rem;">
+                                <th>TAREA</th>
+                                <th>HORA</th>
+                                <th class="text-end">VER</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tarea in lista_tareas %}
+                            <tr>
+                                <td class="text-truncate" style="max-width: 140px; font-weight: 500;">
+                                    {{ tarea.descripcion }}
+                                </td>
+                                <td class="text-danger fw-bold" style="font-size: 0.8rem;">
+                                    {{ tarea.fecha_limite.strftime('%H:%M') }}
+                                </td>
+                                <td class="text-end">
+                                    <a href="/tarea/{{ tarea.id }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">+</a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">
+                                    <small>Nada pendiente</small>
                                 </td>
                             </tr>
                             {% endfor %}
